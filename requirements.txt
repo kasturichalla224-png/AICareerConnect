@@ -1,0 +1,28 @@
+# ── Core Framework ───────────────────────────
+Flask==3.1.1
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.1.0
+Flask-Login==0.6.3
+Flask-WTF==1.2.2
+Flask-CORS==5.0.1
+
+# ── Database ─────────────────────────────────
+SQLAlchemy==2.0.36
+
+# ── Mistral AI ───────────────────────────────
+mistralai==1.6.0
+
+# ── Speech-to-Text ───────────────────────────
+SpeechRecognition==3.14.1
+PyAudio==0.2.14
+
+# ── Text-to-Speech ───────────────────────────
+gTTS==2.5.4
+pyttsx3==2.98
+
+# ── Dashboard / Charts ───────────────────────
+# (Chart.js is loaded via CDN on the frontend)
+
+# ── Utilities ────────────────────────────────
+python-dotenv==1.1.0
+Werkzeug==3.1.3

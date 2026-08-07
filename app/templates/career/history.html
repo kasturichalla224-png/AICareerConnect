@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Chat History — AI Career Connect{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <h2>📜 Your Career Chat History</h2>
+
+    {% if sessions %}
+        {% for session in sessions %}
+        <div class="history-card">
+            <div class="history-meta">
+                <span class="badge">{{ session.career_field or 'General' }}</span>
+                <span class="timestamp">{{ session.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <p class="history-query"><strong>You:</strong> {{ session.query_text }}</p>
+            <p class="history-response"><strong>AI:</strong> {{ session.ai_response[:300] }}…</p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No career sessions yet. <a href="{{ url_for('career.career_home') }}">Start a conversation!</a></p>
+    {% endif %}
+</div>
+{% endblock %}

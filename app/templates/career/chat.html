@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Career Chat — AI Career Connect{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <h2>💬 Career Guidance Chat</h2>
+
+    <div id="chat-messages" class="chat-messages">
+        <div class="message ai-message">
+            <p>Hello! I'm your AI career counselor. Ask me anything about career paths, skills, or industry trends.</p>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Type your career question…" autocomplete="off">
+        <button id="send-btn" class="btn btn-primary" onclick="sendMessage()">Send</button>
+        <button id="mic-btn" class="btn btn-secondary" onclick="startRecording()">🎙️</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AI Career Connect{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h2>📊 Your Career Dashboard</h2>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>Total Sessions</h4>
+            <p id="stat-sessions">—</p>
+        </div>
+        <div class="stat-card">
+            <h4>Speech Interactions</h4>
+            <p id="stat-speech">—</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h4>Career Fields Explored</h4>
+            <canvas id="fieldsChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h4>Platform Metrics</h4>
+            <canvas id="metricsChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

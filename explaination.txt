@@ -1,0 +1,314 @@
+================================================================================
+              AI CAREER CONNECT — PROJECT STRUCTURE EXPLANATION
+          (Written from a Senior Flask Developer's perspective)
+================================================================================
+
+
+COMPLETE DIRECTORY TREE
+────────────────────────
+
+AICareerConnect/
+│
+│── run.py                        ← Application entry point
+│── config.py                     ← Centralized configuration
+│── requirements.txt              ← Python dependencies
+│── .env.example                  ← Environment variable template
+│── .gitignore                    ← Git exclusion rules
+│
+│── app/                          ← Main application package
+│   │── __init__.py               ← Application factory (create_app)
+│   │── models.py                 ← SQLAlchemy database models
+│   │
+│   │── routes/                   ← Blueprint-based route handlers
+│   │   │── __init__.py
+│   │   │── main.py               ← Landing page, about page
+│   │   │── auth.py               ← Register, login, logout
+│   │   │── career.py             ← AI career guidance chat
+│   │   │── dashboard.py          ← Dynamic analytics dashboard
+│   │   │── speech.py             ← Speech-to-text & text-to-speech
+│   │
+│   │── services/                 ← Business logic layer
+│   │   │── __init__.py
+│   │   │── mistral_service.py    ← Mistral API integration
+│   │   │── speech_service.py     ← Audio transcription & synthesis
+│   │
+│   │── utils/                    ← Cross-cutting utilities
+│   │   │── __init__.py
+│   │   │── helpers.py            ← Reusable helper functions
+│   │   │── error_handlers.py     ← Centralized HTTP error handlers
+│   │
+│   │── templates/                ← Jinja2 HTML templates
+│   │   │── base.html             ← Master layout (nav, footer, blocks)
+│   │   │── index.html            ← Landing / home page
+│   │   │── auth/
+│   │   │   │── login.html
+│   │   │   │── register.html
+│   │   │── career/
+│   │   │   │── chat.html         ← AI chat interface
+│   │   │   │── history.html      ← Past session viewer
+│   │   │── dashboard/
+│   │   │   │── overview.html     ← Charts & stat cards
+│   │   │── errors/
+│   │       │── 404.html
+│   │       │── 500.html
+│   │
+│   │── static/                   ← Frontend static assets
+│       │── css/
+│       │   │── style.css         ← Global stylesheet
+│       │── js/
+│           │── app.js            ← Shared JavaScript
+│           │── chat.js           ← Career chat logic
+│           │── dashboard.js      ← Chart.js dashboard logic
+│
+│── tests/                        ← Automated test suite
+│   │── __init__.py
+│   │── conftest.py               ← Pytest fixtures & test app setup
+│   │── test_routes.py            ← Smoke tests for core pages
+│
+│── instance/                     ← (Auto-created) SQLite DB lives here
+│── uploads/                      ← (Auto-created) User file uploads
+│── temp_audio/                   ← (Auto-created) Temporary audio files
+
+
+================================================================================
+                    WHY EACH FOLDER / FILE EXISTS
+================================================================================
+
+
+1. ROOT-LEVEL FILES
+───────────────────
+
+run.py
+  WHY:  Single entry point to start the application. Running `python run.py`
+        boots the dev server. This keeps the app package importable without
+        side effects — essential for testing and WSGI deployment (Gunicorn).
+
+config.py
+  WHY:  Centralizes ALL configuration (DB URI, API keys, upload limits) in
+        environment-specific classes (Dev/Test/Prod). One file to audit for
+        secrets. The app factory picks the right config by name, so switching
+        between SQLite for dev and PostgreSQL for prod is a one-line change.
+
+requirements.txt
+  WHY:  Pins every Python dependency so that `pip install -r requirements.txt`
+        reproduces the exact same environment on any machine. Without this,
+        version drift causes "works on my machine" bugs.
+
+.env.example
+  WHY:  Documents which environment variables the app expects (SECRET_KEY,
+        MISTRAL_API_KEY, etc.) WITHOUT containing real values. New developers
+        copy it to `.env` and fill in their own keys. The real `.env` is
+        gitignored so secrets never hit version control.
+
+.gitignore
+  WHY:  Prevents committing sensitive files (.env), generated artifacts
+        (instance/, __pycache__/), and OS junk (Thumbs.db, .DS_Store).
+
+
+2. app/ — THE APPLICATION PACKAGE
+───────────────────────────────────
+
+app/__init__.py  (Application Factory)
+  WHY:  The `create_app()` factory pattern is the Flask-recommended way to
+        build applications. It:
+        • Makes the app testable (create a fresh app per test with a
+          different config)
+        • Avoids circular imports (extensions are created at module level
+          but initialized inside the factory)
+        • Enables running multiple app instances (e.g., worker + scheduler)
+
+app/models.py
+  WHY:  All SQLAlchemy ORM models in one place. For a project of this size,
+        a single models file keeps things simple and avoids import gymnastics.
+        Contains:
+        • User          → Authentication & profile
+        • CareerSession → Stores every AI Q&A exchange
+        • SpeechLog     → Tracks speech interactions for analytics
+        • DashboardMetric → Cached/computed metrics for the dashboard
+
+
+3. app/routes/ — BLUEPRINT-BASED ROUTING
+──────────────────────────────────────────
+
+  WHY THE FOLDER EXISTS:
+  Flask Blueprints let you split a monolithic app into feature modules.
+  Each blueprint is self-contained, can have its own URL prefix, and can be
+  developed/tested independently. This is how senior Flask devs organize
+  anything beyond a trivial app.
+
+  main.py      → Public pages (landing, about). No auth required.
+  auth.py      → Register/login/logout. Handles password hashing with Werkzeug.
+  career.py    → The core feature: accepts career questions, calls Mistral AI,
+                 persists responses, and serves chat history.
+  dashboard.py → Renders the dashboard page AND exposes JSON API endpoints
+                 (/api/stats, /api/metrics) consumed by Chart.js on the frontend.
+  speech.py    → Two endpoints: upload audio → get transcription (STT),
+                 send text → download audio file (TTS).
+
+
+4. app/services/ — BUSINESS LOGIC LAYER
+─────────────────────────────────────────
+
+  WHY THE FOLDER EXISTS:
+  Routes should be THIN — they parse requests and return responses. The actual
+  "thinking" (calling external APIs, processing data) belongs in services.
+  This separation means:
+  • You can unit-test business logic WITHOUT spinning up Flask
+  • Swapping Mistral for OpenAI later = change one service file, zero route changes
+  • Multiple routes can reuse the same service function
+
+  mistral_service.py
+    → Builds the career-counselor system prompt
+    → Calls the Mistral API via the official SDK
+    → Extracts structured metadata (career_field, confidence_score) from the
+      AI's response using best-effort JSON parsing
+
+  speech_service.py
+    → transcribe_audio(): saves uploaded audio, runs SpeechRecognition (Google
+      Web API), returns text
+    → synthesize_speech(): converts text to MP3 via gTTS, returns the file path
+
+
+5. app/utils/ — CROSS-CUTTING UTILITIES
+─────────────────────────────────────────
+
+  WHY THE FOLDER EXISTS:
+  Small helper functions (date formatting, text truncation) and framework-level
+  concerns (error handlers) that don't belong to any single feature. Keeping
+  them here avoids duplicating code across blueprints.
+
+  helpers.py
+    → format_datetime(), truncate_text() — used in templates and services.
+
+  error_handlers.py
+    → Registers 404 and 500 handlers on the app. Responds with HTML for
+      browser requests and JSON for API requests (content negotiation).
+
+
+6. app/templates/ — JINJA2 HTML TEMPLATES
+──────────────────────────────────────────
+
+  WHY THE FOLDER EXISTS:
+  Flask expects templates in a `templates/` directory by default. Using
+  sub-folders that mirror the blueprints keeps templates organized:
+
+  base.html           → Master layout: navbar, flash messages, content block,
+                         footer, CDN imports. Every other page extends this.
+  index.html          → Landing page with hero section and feature cards.
+  auth/login.html     → Login form.
+  auth/register.html  → Registration form.
+  career/chat.html    → AI chat interface with message bubbles and mic button.
+  career/history.html → Card-based view of past career sessions.
+  dashboard/overview.html → Stat cards + two Chart.js canvas elements.
+  errors/404.html     → Custom "Not Found" page.
+  errors/500.html     → Custom "Server Error" page.
+
+
+7. app/static/ — FRONTEND ASSETS
+──────────────────────────────────
+
+  WHY THE FOLDER EXISTS:
+  Flask serves files from `static/` at the `/static` URL. This is where all
+  CSS, JavaScript, images, and fonts live.
+
+  css/style.css
+    → Complete dark-mode design system using CSS custom properties (design
+      tokens). Includes: glassmorphism navbar, gradient hero, chat bubbles
+      with fade-in animation, dashboard grid, responsive breakpoints.
+
+  js/app.js
+    → Global JavaScript loaded on every page. Currently handles auto-dismissing
+      flash alert messages.
+
+  js/chat.js
+    → Career chat page logic: sends user messages to /career/ask via fetch(),
+      renders response bubbles, and integrates the Web Speech API for
+      microphone input (browser-native STT).
+
+  js/dashboard.js
+    → Fetches /dashboard/api/stats and /dashboard/api/metrics, then renders
+      a doughnut chart (career field distribution) and a bar chart (platform
+      metrics) using Chart.js.
+
+
+8. tests/ — AUTOMATED TEST SUITE
+──────────────────────────────────
+
+  WHY THE FOLDER EXISTS:
+  Professional Flask projects MUST have tests. This folder uses pytest, the
+  de facto standard for Python testing.
+
+  conftest.py
+    → Provides reusable fixtures: `app` creates a Flask app with the "testing"
+      config (in-memory SQLite), `client` gives you a test client to simulate
+      HTTP requests.
+
+  test_routes.py
+    → Smoke tests that verify core pages (/, /auth/login, /auth/register)
+      return HTTP 200. Acts as a safety net — if these fail, something
+      fundamental is broken.
+
+
+9. RUNTIME DIRECTORIES (auto-created, gitignored)
+───────────────────────────────────────────────────
+
+  instance/
+    WHY: Flask convention for instance-specific data. The SQLite database file
+         (aicareer.db) lives here. Gitignored because each developer/server
+         has its own database.
+
+  uploads/
+    WHY: Stores user-uploaded files (e.g., resumes, audio recordings) before
+         processing. Separated from app code so it can be mounted to a
+         different volume in production.
+
+  temp_audio/
+    WHY: Temporary storage for audio files during speech-to-text and
+         text-to-speech processing. Files are cleaned up after use, but the
+         directory must exist.
+
+
+================================================================================
+              ARCHITECTURE DECISION SUMMARY
+================================================================================
+
+PATTERN                     WHY WE USE IT
+─────────────────────────   ──────────────────────────────────────────────
+Application Factory         Testability, avoids circular imports, multi-instance
+Blueprints                  Feature-based modularity, clean URL prefixes
+Service Layer               Keeps routes thin, enables unit testing & swappability
+Config Classes              Environment-specific settings, single audit point
+Jinja2 Inheritance          DRY templates (one base layout, many pages)
+Chart.js via CDN            No build step needed; dynamic data from JSON APIs
+Web Speech API              Browser-native STT — no server-side audio streaming
+SQLAlchemy ORM              Pythonic DB access, migration support, DB-agnostic
+Flask-Migrate               Alembic-powered schema migrations
+Flask-Login                 Session-based auth with @login_required decorator
+
+
+================================================================================
+                    HOW TO RUN THE PROJECT
+================================================================================
+
+1.  Create and activate a virtual environment:
+        python -m venv venv
+        venv\Scripts\activate          (Windows)
+
+2.  Install dependencies:
+        pip install -r requirements.txt
+
+3.  Set up environment variables:
+        copy .env.example .env
+        # Edit .env and add your MISTRAL_API_KEY
+
+4.  Run the development server:
+        python run.py
+
+5.  Open in browser:
+        http://localhost:5000
+
+6.  Run tests:
+        pytest tests/ -v
+
+================================================================================
+  

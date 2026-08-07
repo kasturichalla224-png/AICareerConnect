@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Career Connect{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- App Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Chart.js (for dashboard) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- ── Navigation ──────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <a href="{{ url_for('main.index') }}" class="nav-brand">🚀 AI Career Connect</a>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('career.career_home') }}">Career Chat</a>
+                <a href="{{ url_for('dashboard.overview') }}">Dashboard</a>
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+                <a href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- ── Flash Messages ──────────────────────────────────────────── -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- ── Footer ──────────────────────────────────────────────────── -->
+    <footer class="footer">
+        <p>&copy; 2026 AI Career Connect &mdash; Powered by Mistral AI</p>
+    </footer>
+
+    <!-- App JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

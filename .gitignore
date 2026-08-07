@@ -1,0 +1,20 @@
+# Environment
+.env
+venv/
+__pycache__/
+*.pyc
+
+# Instance data (DB files)
+instance/
+
+# Uploads & temp audio
+uploads/
+temp_audio/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
