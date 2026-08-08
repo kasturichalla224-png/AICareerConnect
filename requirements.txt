@@ -14,7 +14,7 @@ mistralai==1.6.0
 
 # ── Speech-to-Text ───────────────────────────
 SpeechRecognition==3.14.1
-PyAudio==0.2.14
+
 
 # ── Text-to-Speech ───────────────────────────
 gTTS==2.5.4
